@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0" xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle">
+    <channel>
+        <title>Hone (FG Version) Updates</title>
+        <link>https://github.com/kailey-batman/hone-fg</link>
+        <description>Hone update feed for the Fieldguide team</description>
+        <language>en</language>
+
+        <!-- Releases go here, newest first. Run ./scripts/release.sh <version> to generate the entry. -->
+
+    </channel>
+</rss>
