@@ -108,7 +108,14 @@ struct MenuBarView: View {
 
     var footer: some View {
         HStack(spacing: 12) {
-            SettingsLink {
+            Button {
+                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
+                NSApp.activate(ignoringOtherApps: true)
+                // Bring the settings window to front if already open
+                NSApp.windows
+                    .first { $0.title.lowercased().contains("settings") || $0.identifier?.rawValue == "com_apple_SwiftUI_Settings_window" }?
+                    .makeKeyAndOrderFront(nil)
+            } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "gearshape")
                         .font(.system(size: 13))
