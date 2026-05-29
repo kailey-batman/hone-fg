@@ -8,5 +8,17 @@
 
         <!-- Releases go here, newest first. Run ./scripts/release.sh <version> to generate the entry. -->
 
+        <item>
+            <title>Version 1.1</title>
+            <pubDate>Fri, 29 May 2026 11:51:40 -0400</pubDate>
+            <sparkle:version>2</sparkle:version>
+            <sparkle:shortVersionString>1.1</sparkle:shortVersionString>
+            <enclosure
+                url="https://github.com/kailey-batman/hone-fg/releases/download/v1.1/Hone-FG-1.1.zip"
+                sparkle:edSignature="9QYHNh/4GHSIiiE18/60MPkgozh3YTk7ZCAyWGjqd/z0idjycr2VsMPyuanrWD8FSwXKhWs6OGWjIVYt6zG8Dg=="
+                length="1656405"
+                type="application/octet-stream" />
+        </item>
+
     </channel>
 </rss>

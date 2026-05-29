@@ -1,8 +1,8 @@
 //
 //  ContentView.swift
-//  Hone
+//  Hone (FG Version)
 //
-//  Created by Kailey Thorpe on 5/20/26.
+//  Created by Kailey Thorpe on 5/21/26.
 //
 
 import SwiftUI

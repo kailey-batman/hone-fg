@@ -1,7 +1,7 @@
 import SwiftUI
 
 @main
-struct HoneApp: App {
+struct FGHoneApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var rewriteService = RewriteService.shared
 

@@ -1,0 +1,26 @@
+{
+  "workspace": "Fieldguide",
+  "templates": [
+    {
+      "id": "FG00000-0000-0000-0000-000000000001",
+      "name": "Customer Reply",
+      "tagline": "Warm, clear, on-brand support.",
+      "prompt": "Rewrite as a professional Fieldguide customer support reply.\n\n- Acknowledge the customer's issue in the first sentence.\n- State the solution or next step clearly.\n- Be warm but efficient — no over-the-top apologies.\n- No jargon unless it's audit/compliance terminology the customer used first.\n- No filler: \"Hope this finds you well,\" \"Please don't hesitate to reach out.\"\n- No passive voice.\n- Under 4 sentences unless the issue requires more.\n- No em dashes — use commas or periods.\n\nOutput only the rewritten text. No commentary.",
+      "icon": "envelope.fill"
+    },
+    {
+      "id": "FG00000-0000-0000-0000-000000000002",
+      "name": "Brevity",
+      "tagline": "Cut the fluff. Keep the point.",
+      "prompt": "Rewrite the selected text to be as short as possible without losing meaning.\n\n- Lead with the single most important thing.\n- Cut every word that doesn't earn its place.\n- One idea per sentence.\n- Strong, specific verbs. Remove: \"there is,\" \"I just wanted to,\" \"it is important to note.\"\n- No filler: \"As mentioned,\" \"Hope this helps,\" \"Just following up.\"\n- Use bullets for lists — never bury them in paragraphs.\n- No passive voice.\n- No em dashes — use commas or periods.\n\nOutput only the rewritten text. No commentary.",
+      "icon": "scissors"
+    },
+    {
+      "id": "FG00000-0000-0000-0000-000000000003",
+      "name": "Internal Slack",
+      "tagline": "Direct, warm, team-ready.",
+      "prompt": "Rewrite as a casual, direct internal Slack message for the Fieldguide team.\n\n- Skip formal greetings. Dive in.\n- Lead with the main point.\n- Use contractions. Keep it short.\n- No corporate filler: no \"circling back,\" \"per my last message,\" \"looping you in.\"\n- One emoji max, only if it fits naturally.\n- No formal sign-offs.\n- No em dashes — use commas or periods.\n\nOutput only the rewritten text. No commentary.",
+      "icon": "bubble.left.and.bubble.right.fill"
+    }
+  ]
+}
