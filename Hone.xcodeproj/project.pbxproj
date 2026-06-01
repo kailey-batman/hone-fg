@@ -39,6 +39,7 @@
 				Services/MenuBarTipService.swift,
 				Services/RemoteTemplateService.swift,
 				Services/RewriteService.swift,
+				Services/SupabaseService.swift,
 				Theme.swift,
 				Views/MenuBarView.swift,
 				Views/OnboardingView.swift,

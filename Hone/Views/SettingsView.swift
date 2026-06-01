@@ -5,7 +5,8 @@ struct SettingsView: View {
     @State private var selectedProfileID: UUID?
     @State private var showNewProfile = false
 
-    private let apiKeyID = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    private let apiKeyID   = UUID(uuidString: "00000000-0000-0000-0000-000000000001")!
+    private let accountID  = UUID(uuidString: "00000000-0000-0000-0000-000000000002")!
 
     var body: some View {
         HStack(spacing: 0) {
@@ -63,21 +64,19 @@ struct SettingsView: View {
                     .padding(.top, 16)
                     .padding(.bottom, 4)
 
-                if Config.builtInAPIKey != nil {
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark.shield.fill")
-                            .font(.system(size: 11))
-                            .foregroundColor(Color.honeAction)
-                        Text("Powered by Fieldguide")
-                            .font(.system(size: 12))
-                            .foregroundColor(Color.honeMuted)
-                    }
-                    .padding(.horizontal, 14)
-                    .padding(.vertical, 6)
-                } else {
+                sidebarRow(
+                    isSelected: selectedProfileID == accountID,
+                    label: "Account",
+                    icon: "person.circle",
+                    badge: nil
+                ) {
+                    selectedProfileID = accountID
+                }
+
+                if Config.builtInAPIKey == nil {
                     sidebarRow(
                         isSelected: selectedProfileID == apiKeyID,
-                        label: "API Key",
+                        label: "API Keys",
                         icon: "key.fill",
                         badge: nil
                     ) {
@@ -141,7 +140,7 @@ struct SettingsView: View {
         .background(Color.honeBase)
         .onAppear {
             if selectedProfileID == nil {
-                selectedProfileID = appState.profiles.first?.id ?? apiKeyID
+                selectedProfileID = appState.profiles.first?.id ?? accountID
             }
         }
     }
@@ -207,7 +206,12 @@ struct SettingsView: View {
 
     @ViewBuilder
     var detail: some View {
-        if selectedProfileID == apiKeyID {
+        if selectedProfileID == accountID {
+            AccountSettingsView()
+                .environmentObject(appState)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.honeLinen)
+        } else if selectedProfileID == apiKeyID {
             ApiKeyView()
                 .environmentObject(appState)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -644,5 +648,221 @@ struct ProviderKeyRow: View {
         .onAppear {
             apiKey = appState.apiKey(for: provider)
         }
+    }
+}
+
+// MARK: Account Settings View
+
+struct AccountSettingsView: View {
+    @EnvironmentObject var appState: AppState
+    @ObservedObject private var supabase = SupabaseService.shared
+
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isSignUp = false
+    @State private var isLoading = false
+    @State private var errorMessage = ""
+    @State private var showConfirmSignOut = false
+
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 24) {
+                if supabase.isLoggedIn {
+                    loggedInView
+                } else {
+                    loginView
+                }
+            }
+            .padding(28)
+        }
+    }
+
+    // MARK: Logged in
+
+    var loggedInView: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("ACCOUNT")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.honeAction)
+                    .tracking(0.6)
+                Text("Your profiles and settings sync automatically across devices.")
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .lineSpacing(2)
+            }
+
+            VStack(alignment: .leading, spacing: 0) {
+                HStack(spacing: 14) {
+                    ZStack {
+                        Circle()
+                            .fill(Color.honeAction.opacity(0.12))
+                            .frame(width: 44, height: 44)
+                        Image(systemName: "person.fill")
+                            .font(.system(size: 18))
+                            .foregroundColor(Color.honeAction)
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(supabase.currentUser?.email ?? "")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color.honeText)
+                        HStack(spacing: 4) {
+                            if supabase.isSyncing {
+                                ProgressView()
+                                    .scaleEffect(0.6)
+                                    .frame(width: 12, height: 12)
+                                Text("Syncing...")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Color.honeMuted)
+                            } else {
+                                Image(systemName: "checkmark.circle.fill")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Color.honeAction)
+                                Text("Synced")
+                                    .font(.system(size: 11))
+                                    .foregroundColor(Color.honeMuted)
+                            }
+                        }
+                    }
+                    Spacer()
+                }
+                .padding(16)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(Color.honeCard.opacity(0.5))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .stroke(Color.honeAction.opacity(0.2), lineWidth: 1)
+                        )
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 8) {
+                Text("SYNCED DATA")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.honeAction)
+                    .tracking(0.6)
+
+                syncRow(icon: "doc.text.fill", label: "Profiles", detail: "\(appState.profiles.count) profile\(appState.profiles.count == 1 ? "" : "s")")
+                syncRow(icon: "keyboard", label: "Shortcuts", detail: "Included with profiles")
+                syncRow(icon: "gearshape", label: "Settings", detail: "Auto-paste preference")
+            }
+
+            Button {
+                showConfirmSignOut = true
+            } label: {
+                Text("Sign Out")
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundColor(.red)
+            }
+            .buttonStyle(.plain)
+            .confirmationDialog("Sign out of Hone?", isPresented: $showConfirmSignOut) {
+                Button("Sign Out", role: .destructive) {
+                    supabase.signOut()
+                }
+            } message: {
+                Text("Your profiles will remain on this device but won't sync until you sign back in.")
+            }
+        }
+    }
+
+    func syncRow(icon: String, label: String, detail: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 12))
+                .foregroundColor(Color.honeAction)
+                .frame(width: 18)
+            Text(label)
+                .font(.system(size: 13))
+                .foregroundColor(Color.honeText)
+            Spacer()
+            Text(detail)
+                .font(.system(size: 12))
+                .foregroundColor(Color.honeMuted)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color.honeCard.opacity(0.4))
+        )
+    }
+
+    // MARK: Login / Sign up
+
+    var loginView: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text(isSignUp ? "CREATE ACCOUNT" : "SIGN IN")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.honeAction)
+                    .tracking(0.6)
+                Text(isSignUp
+                     ? "Create an account to sync your profiles and settings across devices."
+                     : "Sign in to sync your profiles and settings across all your devices.")
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .lineSpacing(2)
+            }
+
+            VStack(spacing: 10) {
+                TextField("Email", text: $email)
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(.emailAddress)
+                    .font(.system(size: 13))
+
+                SecureField("Password", text: $password)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.system(size: 13))
+            }
+
+            if !errorMessage.isEmpty {
+                Text(errorMessage)
+                    .font(.system(size: 12))
+                    .foregroundColor(.red)
+            }
+
+            HStack(spacing: 12) {
+                Button(isSignUp ? "Create Account" : "Sign In") {
+                    Task { await submit() }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.honeAction)
+                .disabled(email.isEmpty || password.count < 6 || isLoading)
+
+                if isLoading {
+                    ProgressView()
+                        .scaleEffect(0.8)
+                }
+
+                Spacer()
+
+                Button(isSignUp ? "Already have an account?" : "Create an account") {
+                    withAnimation { isSignUp.toggle(); errorMessage = "" }
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundColor(Color.honeAction)
+            }
+        }
+    }
+
+    private func submit() async {
+        isLoading = true
+        errorMessage = ""
+        do {
+            if isSignUp {
+                _ = try await supabase.signUp(email: email, password: password)
+            } else {
+                _ = try await supabase.signIn(email: email, password: password)
+            }
+            // Pull data after login
+            await appState.syncFromSupabase()
+            // Push local data if signing up
+            if isSignUp { appState.pushToSupabase() }
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
     }
 }

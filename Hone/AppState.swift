@@ -6,7 +6,10 @@ class AppState: ObservableObject {
     @Published var profiles: [Profile] = []
     @Published var hasCompletedOnboarding: Bool = false
     @Published var autoPaste: Bool = false {
-        didSet { UserDefaults.standard.set(autoPaste, forKey: "hone.autoPaste") }
+        didSet {
+            UserDefaults.standard.set(autoPaste, forKey: "hone.autoPaste")
+            pushToSupabase()
+        }
     }
     @Published var userEmail: String = "" {
         didSet { UserDefaults.standard.set(userEmail, forKey: "hone.userEmail") }
@@ -34,7 +37,40 @@ class AppState: ObservableObject {
         hasCompletedOnboarding = UserDefaults.standard.bool(forKey: onboardingKey)
         autoPaste = UserDefaults.standard.bool(forKey: "hone.autoPaste")
         userEmail = UserDefaults.standard.string(forKey: "hone.userEmail") ?? ""
-        Task { await RemoteTemplateService.shared.fetch() }
+        Task {
+            await RemoteTemplateService.shared.fetch()
+            // Pull latest data from Supabase if logged in
+            await syncFromSupabase()
+        }
+    }
+
+    // MARK: - Supabase sync
+
+    func syncFromSupabase() async {
+        let supabase = SupabaseService.shared
+        guard supabase.isLoggedIn else { return }
+
+        // Pull profiles
+        if let remoteProfiles = await supabase.pullProfiles(), !remoteProfiles.isEmpty {
+            profiles = remoteProfiles
+            saveProfiles()
+            HotkeyService.shared.registerAll(profiles: profiles)
+        }
+
+        // Pull settings
+        if let remoteSettings = await supabase.pullSettings() {
+            autoPaste = remoteSettings.autoPaste
+            UserDefaults.standard.set(autoPaste, forKey: "hone.autoPaste")
+        }
+    }
+
+    func pushToSupabase() {
+        let supabase = SupabaseService.shared
+        guard supabase.isLoggedIn else { return }
+        Task {
+            await supabase.pushProfiles(profiles)
+            await supabase.pushSettings(autoPaste: autoPaste)
+        }
     }
 
     func loadProfiles() {
@@ -52,17 +88,20 @@ class AppState: ObservableObject {
     func addProfile(_ profile: Profile) {
         profiles.append(profile)
         saveProfiles()
+        pushToSupabase()
     }
 
     func updateProfile(_ profile: Profile) {
         guard let index = profiles.firstIndex(where: { $0.id == profile.id }) else { return }
         profiles[index] = profile
         saveProfiles()
+        pushToSupabase()
     }
 
     func deleteProfile(_ profile: Profile) {
         profiles.removeAll { $0.id == profile.id }
         saveProfiles()
+        pushToSupabase()
     }
 
     func completeOnboarding() {

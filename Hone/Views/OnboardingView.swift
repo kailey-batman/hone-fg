@@ -26,7 +26,7 @@ struct OnboardingView: View {
 
     @State private var step = 0
     @State private var apiKey = ""
-    @State private var email = ""
+    @State private var email = UserDefaults.standard.string(forKey: "hone.userEmail") ?? ""
     @State private var selectedTemplate: ProfileTemplate? = nil
     @State private var profileName = ""
     @State private var profilePrompt = ""
@@ -37,7 +37,7 @@ struct OnboardingView: View {
 
     var body: some View {
         Group {
-            if step == 5 {
+            if step == 6 {
                 successScreen
             } else {
                 HStack(spacing: 0) {
@@ -81,18 +81,20 @@ struct OnboardingView: View {
                     .foregroundColor(.white.opacity(0.8))
                     .lineSpacing(5)
             } else if Config.builtInAPIKey != nil {
-                // FG Version — no API key step
                 VStack(alignment: .leading, spacing: 2) {
-                    leftStepRow(index: 2, label: "Your style")
-                    leftStepRow(index: 3, label: "Your shortcut")
-                    leftStepRow(index: 4, label: "Permissions")
+                    leftStepRow(index: 1, label: "Your email")
+                    leftStepRow(index: 2, label: "Account")
+                    leftStepRow(index: 3, label: "Your style")
+                    leftStepRow(index: 4, label: "Your shortcut")
+                    leftStepRow(index: 5, label: "Permissions")
                 }
             } else {
                 VStack(alignment: .leading, spacing: 2) {
                     leftStepRow(index: 1, label: "Connect Claude")
-                    leftStepRow(index: 2, label: "Your style")
-                    leftStepRow(index: 3, label: "Your shortcut")
-                    leftStepRow(index: 4, label: "Permissions")
+                    leftStepRow(index: 2, label: "Account")
+                    leftStepRow(index: 3, label: "Your style")
+                    leftStepRow(index: 4, label: "Your shortcut")
+                    leftStepRow(index: 5, label: "Permissions")
                 }
             }
 
@@ -148,10 +150,11 @@ struct OnboardingView: View {
     var rightContent: some View {
         switch step {
         case 0: welcomeStep
-        case 1: apiKeyStep
-        case 2: templateStep
-        case 3: shortcutStep
-        case 4: accessibilityStep
+        case 1: Config.builtInAPIKey != nil ? AnyView(emailStep) : AnyView(apiKeyStep)
+        case 2: accountStep
+        case 3: templateStep
+        case 4: shortcutStep
+        case 5: accessibilityStep
         default: EmptyView()
         }
     }
@@ -188,23 +191,18 @@ struct OnboardingView: View {
                         .fixedSize(horizontal: false, vertical: true)
                 }
 
-                if Config.builtInAPIKey != nil {
-                    TextField("your@fieldguide.io", text: $email)
-                        .textFieldStyle(.roundedBorder)
-                        .textContentType(.emailAddress)
-                        .font(.system(size: 13))
-                }
-
                 Button("Get Started") {
                     if Config.builtInAPIKey != nil {
-                        appState.userEmail = email.trimmingCharacters(in: .whitespaces)
+                        // Skip email step if email already saved (reinstaller)
+                        let hasEmail = !email.trimmingCharacters(in: .whitespaces).isEmpty
+                        withAnimation { step = hasEmail ? 2 : 1 }
+                    } else {
+                        withAnimation { step = 1 }
                     }
-                    withAnimation { step = Config.builtInAPIKey != nil ? 2 : 1 }
                 }
                 .buttonStyle(.borderedProminent)
                 .tint(Color.honeAction)
                 .controlSize(.large)
-                .disabled(Config.builtInAPIKey != nil && !email.contains("@"))
             }
             Spacer()
         }
@@ -227,6 +225,49 @@ struct OnboardingView: View {
                 .font(.system(size: 10, weight: .medium))
                 .foregroundColor(Color.honeMuted)
         }
+    }
+
+    // MARK: Step 1 — Email (FG Version)
+
+    var emailStep: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            heading("What's your email?", sub: "Used to verify you're part of the Fieldguide team.")
+
+            Spacer().frame(height: 28)
+
+            VStack(alignment: .leading, spacing: 6) {
+                fieldLabel("Work email")
+                TextField("you@fieldguide.io", text: $email)
+                    .textFieldStyle(.roundedBorder)
+                    .textContentType(.emailAddress)
+                    .font(.system(size: 13))
+            }
+
+            Spacer()
+
+            navRow(
+                back: { withAnimation { step = 0 } },
+                next: {
+                    let trimmed = email.trimmingCharacters(in: .whitespaces)
+                    UserDefaults.standard.set(trimmed, forKey: "hone.userEmail")
+                    withAnimation { step = 2 }
+                },
+                nextLabel: "Continue",
+                nextEnabled: email.trimmingCharacters(in: .whitespaces).contains("@")
+            )
+        }
+        .padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.honeLinen)
+    }
+
+    // MARK: Step 2 — Account (login / sign up)
+
+    var accountStep: some View {
+        OnboardingAccountStep(
+            onBack: { withAnimation { step = 1 } },
+            onContinue: { withAnimation { step = 3 } }
+        )
     }
 
     // MARK: Step 1 — API Key
@@ -381,8 +422,8 @@ struct OnboardingView: View {
                 Spacer().frame(height: 24)
 
                 navRow(
-                    back: { withAnimation { step = Config.builtInAPIKey != nil ? 0 : 1 } },
-                    next: { withAnimation { step = 3 } },
+                    back: { withAnimation { step = 2 } },
+                    next: { withAnimation { step = 4 } },
                     nextLabel: "Continue",
                     nextEnabled: selectedTemplate != nil &&
                         !profileName.isEmpty &&
@@ -502,7 +543,7 @@ struct OnboardingView: View {
             Spacer()
 
             navRow(
-                back: { withAnimation { step = 2 } },
+                back: { withAnimation { step = 3 } },
                 next: { finish() },
                 nextLabel: "Finish",
                 nextEnabled: hotkey != nil
@@ -584,8 +625,8 @@ struct OnboardingView: View {
             Spacer()
 
             navRow(
-                back: { withAnimation { step = 3 } },
-                next: { withAnimation { step = 5 } },
+                back: { withAnimation { step = 4 } },
+                next: { withAnimation { step = 6 } },
                 nextLabel: accessibilityGranted ? "Continue" : "Skip for now",
                 nextEnabled: true
             )
@@ -622,16 +663,19 @@ struct OnboardingView: View {
 
                 if Config.builtInAPIKey != nil {
                     VStack(alignment: .leading, spacing: 2) {
-                        leftStepRow(index: 2, label: "Your style")
-                        leftStepRow(index: 3, label: "Your shortcut")
-                        leftStepRow(index: 4, label: "Permissions")
+                        leftStepRow(index: 1, label: "Your email")
+                        leftStepRow(index: 2, label: "Account")
+                        leftStepRow(index: 3, label: "Your style")
+                        leftStepRow(index: 4, label: "Your shortcut")
+                        leftStepRow(index: 5, label: "Permissions")
                     }
                 } else {
                     VStack(alignment: .leading, spacing: 2) {
                         leftStepRow(index: 1, label: "Connect Claude")
-                        leftStepRow(index: 2, label: "Your style")
-                        leftStepRow(index: 3, label: "Your shortcut")
-                        leftStepRow(index: 4, label: "Permissions")
+                        leftStepRow(index: 2, label: "Account")
+                        leftStepRow(index: 3, label: "Your style")
+                        leftStepRow(index: 4, label: "Your shortcut")
+                        leftStepRow(index: 5, label: "Permissions")
                     }
                 }
 
@@ -793,9 +837,9 @@ struct OnboardingView: View {
         HotkeyService.shared.registerAll(profiles: appState.profiles)
         // Skip accessibility step if already granted
         if AXIsProcessTrusted() {
-            withAnimation { step = 5 }
+            withAnimation { step = 6 }
         } else {
-            withAnimation { step = 4 }
+            withAnimation { step = 5 }
         }
     }
 
@@ -811,8 +855,163 @@ struct OnboardingView: View {
                 accessibilityGranted = true
                 accessibilityTimer?.invalidate()
                 accessibilityTimer = nil
-                withAnimation { step = 5 }
+                withAnimation { step = 6 }
             }
         }
+    }
+}
+
+// MARK: - Onboarding Account Step
+
+struct OnboardingAccountStep: View {
+    var onBack: () -> Void
+    var onContinue: () -> Void
+
+    @ObservedObject private var supabase = SupabaseService.shared
+
+    @State private var email = ""
+    @State private var password = ""
+    @State private var isSignUp = false
+    @State private var isLoading = false
+    @State private var errorMessage = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            if supabase.isLoggedIn {
+                alreadyLoggedIn
+            } else {
+                loginForm
+            }
+        }
+        .padding(40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.honeLinen)
+    }
+
+    var alreadyLoggedIn: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Account")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Color.honeText)
+                    Text("Your profiles will sync across all your devices.")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.honeSubtext.opacity(0.55))
+                }
+
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.shield.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Color.honeAction)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Signed in")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(Color.honeText)
+                        Text(supabase.currentUser?.email ?? "")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.honeMuted)
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.honeAction.opacity(0.08)))
+            }
+
+            Spacer()
+
+            HStack {
+                Button("Back", action: onBack)
+                    .buttonStyle(.plain)
+                    .foregroundColor(Color.honeMuted)
+                Spacer()
+                Button("Continue") { onContinue() }
+                    .buttonStyle(.borderedProminent)
+                    .tint(Color.honeAction)
+                    .controlSize(.large)
+            }
+        }
+    }
+
+    var loginForm: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(isSignUp ? "Create an account" : "Sign in")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Color.honeText)
+                    Text("Sync your profiles and settings across devices. You can skip this and do it later in Settings.")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.honeSubtext.opacity(0.55))
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                VStack(spacing: 10) {
+                    TextField("Email", text: $email)
+                        .textFieldStyle(.roundedBorder)
+                        .textContentType(.emailAddress)
+                        .font(.system(size: 13))
+                    SecureField("Password (min. 6 characters)", text: $password)
+                        .textFieldStyle(.roundedBorder)
+                        .font(.system(size: 13))
+                }
+
+                if !errorMessage.isEmpty {
+                    Text(errorMessage)
+                        .font(.system(size: 12))
+                        .foregroundColor(.red)
+                }
+
+                Button(isSignUp ? "Already have an account? Sign in" : "Don't have an account? Create one") {
+                    withAnimation { isSignUp.toggle(); errorMessage = "" }
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 12))
+                .foregroundColor(Color.honeAction)
+            }
+
+            Spacer()
+
+            HStack {
+                Button("Back", action: onBack)
+                    .buttonStyle(.plain)
+                    .foregroundColor(Color.honeMuted)
+                Spacer()
+
+                Button("Skip") { onContinue() }
+                    .buttonStyle(.plain)
+                    .foregroundColor(Color.honeMuted)
+                    .padding(.trailing, 12)
+
+                Button(isSignUp ? "Create Account" : "Sign In") {
+                    Task { await submit() }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(Color.honeAction)
+                .controlSize(.large)
+                .disabled(email.isEmpty || password.count < 6 || isLoading)
+
+                if isLoading {
+                    ProgressView().scaleEffect(0.8)
+                }
+            }
+        }
+    }
+
+    private func submit() async {
+        isLoading = true
+        errorMessage = ""
+        do {
+            if isSignUp {
+                _ = try await supabase.signUp(email: email, password: password)
+            } else {
+                _ = try await supabase.signIn(email: email, password: password)
+            }
+            onContinue()
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+        isLoading = false
     }
 }
