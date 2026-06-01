@@ -108,29 +108,7 @@ struct MenuBarView: View {
 
     var footer: some View {
         HStack(spacing: 12) {
-            Button {
-                NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                NSApp.activate(ignoringOtherApps: true)
-                // Bring the settings window to front if already open
-                NSApp.windows
-                    .first { $0.title.lowercased().contains("settings") || $0.identifier?.rawValue == "com_apple_SwiftUI_Settings_window" }?
-                    .makeKeyAndOrderFront(nil)
-            } label: {
-                HStack(spacing: 6) {
-                    Image(systemName: "gearshape")
-                        .font(.system(size: 13))
-                    Text("Settings")
-                        .font(.system(size: 13, weight: .medium))
-                }
-                .foregroundColor(.honeMuted)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 7)
-                .background(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(Color.honeSurface)
-                )
-            }
-            .buttonStyle(.plain)
+            SettingsButton()
 
             Spacer()
 
@@ -168,6 +146,43 @@ struct MenuBarView: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
+    }
+}
+
+// MARK: Settings Button
+
+/// Uses @Environment(\.openSettings) so it works correctly from inside a MenuBarExtra popover.
+/// NSApp.sendAction("showSettingsWindow:") doesn't reliably traverse the responder chain
+/// from a MenuBarExtra .window-style popover.
+struct SettingsButton: View {
+    @Environment(\.openSettings) private var openSettings
+
+    var body: some View {
+        Button {
+            openSettings()
+            NSApp.activate(ignoringOtherApps: true)
+            // If already open, bring it forward
+            DispatchQueue.main.async {
+                NSApp.windows
+                    .first { $0.identifier?.rawValue == "com_apple_SwiftUI_Settings_window" }?
+                    .makeKeyAndOrderFront(nil)
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "gearshape")
+                    .font(.system(size: 13))
+                Text("Settings")
+                    .font(.system(size: 13, weight: .medium))
+            }
+            .foregroundColor(.honeMuted)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 7)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(Color.honeSurface)
+            )
+        }
+        .buttonStyle(.plain)
     }
 }
 
