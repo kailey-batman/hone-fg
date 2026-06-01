@@ -102,16 +102,33 @@ class SupabaseService: ObservableObject {
 
     // MARK: Auth
 
-    func signUp(email: String, password: String) async throws -> SupabaseSession {
+    /// Returns `true` if the user was logged in immediately (email confirmation disabled),
+    /// or `false` if a confirmation email was sent and the user must verify before signing in.
+    @discardableResult
+    func signUp(email: String, password: String) async throws -> Bool {
         let body: [String: Any] = ["email": email, "password": password]
-        let session: SupabaseSession = try await request(
+        let bodyData = try JSONSerialization.data(withJSONObject: body)
+        let data: Data = try await rawRequest(
             path: "/auth/v1/signup",
             method: "POST",
-            body: body,
+            body: bodyData,
             authenticated: false
         )
-        saveSession(session)
-        return session
+        // Check for API-level errors first
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let msg = json["msg"] as? String ?? json["message"] as? String ?? json["error_description"] as? String {
+            if msg.contains("already registered") { throw SupabaseError.emailAlreadyExists }
+            if msg.contains("Invalid login") || msg.contains("invalid") { throw SupabaseError.invalidCredentials }
+            throw SupabaseError.unknown(msg)
+        }
+        // If the response contains an access_token, email confirmation is disabled — log in immediately
+        if let session = try? JSONDecoder().decode(SupabaseSession.self, from: data),
+           !session.accessToken.isEmpty {
+            saveSession(session)
+            return true
+        }
+        // No access_token and no error = confirmation email sent, user must verify before signing in
+        return false
     }
 
     func signIn(email: String, password: String) async throws -> SupabaseSession {

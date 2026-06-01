@@ -874,11 +874,14 @@ struct OnboardingAccountStep: View {
     @State private var isSignUp = false
     @State private var isLoading = false
     @State private var errorMessage = ""
+    @State private var awaitingConfirmation = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             if supabase.isLoggedIn {
                 alreadyLoggedIn
+            } else if awaitingConfirmation {
+                confirmationPending
             } else {
                 loginForm
             }
@@ -886,6 +889,63 @@ struct OnboardingAccountStep: View {
         .padding(40)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Color.honeLinen)
+    }
+
+    var confirmationPending: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            VStack(alignment: .leading, spacing: 20) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Check your email")
+                        .font(.system(size: 22, weight: .bold))
+                        .foregroundColor(Color.honeText)
+                    Text("We sent a confirmation link to \(email). Click it to verify your account.")
+                        .font(.system(size: 13))
+                        .foregroundColor(Color.honeSubtext.opacity(0.55))
+                        .lineSpacing(3)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 12) {
+                    Image(systemName: "envelope.badge.fill")
+                        .font(.system(size: 24))
+                        .foregroundColor(Color.honeAction)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(email)
+                            .font(.system(size: 13, weight: .semibold))
+                            .foregroundColor(Color.honeText)
+                        Text("Awaiting verification")
+                            .font(.system(size: 11))
+                            .foregroundColor(Color.honeMuted)
+                    }
+                }
+                .padding(14)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(RoundedRectangle(cornerRadius: 10).fill(Color.honeAction.opacity(0.08)))
+            }
+
+            Spacer()
+
+            HStack {
+                Button("Back") {
+                    awaitingConfirmation = false
+                    isSignUp = false
+                    errorMessage = ""
+                }
+                .buttonStyle(.plain)
+                .foregroundColor(Color.honeMuted)
+                Spacer()
+                Text("Confirmed your email?")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.honeMuted)
+                Button("Sign In") {
+                    awaitingConfirmation = false
+                    isSignUp = false
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(Color.honeAction)
+            }
+        }
     }
 
     var alreadyLoggedIn: some View {
@@ -1004,7 +1064,12 @@ struct OnboardingAccountStep: View {
         errorMessage = ""
         do {
             if isSignUp {
-                _ = try await supabase.signUp(email: email, password: password)
+                let loggedIn = try await supabase.signUp(email: email, password: password)
+                if !loggedIn {
+                    isLoading = false
+                    awaitingConfirmation = true
+                    return
+                }
             } else {
                 _ = try await supabase.signIn(email: email, password: password)
             }

@@ -663,17 +663,67 @@ struct AccountSettingsView: View {
     @State private var isLoading = false
     @State private var errorMessage = ""
     @State private var showConfirmSignOut = false
+    @State private var awaitingConfirmation = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 if supabase.isLoggedIn {
                     loggedInView
+                } else if awaitingConfirmation {
+                    confirmationPendingView
                 } else {
                     loginView
                 }
             }
             .padding(28)
+        }
+    }
+
+    var confirmationPendingView: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("CHECK YOUR EMAIL")
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundColor(Color.honeAction)
+                    .tracking(0.6)
+                Text("We sent a confirmation link to \(email). Click it to verify your account, then come back and sign in.")
+                    .font(.callout)
+                    .foregroundColor(.secondary)
+                    .lineSpacing(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            HStack(spacing: 12) {
+                Image(systemName: "envelope.badge.fill")
+                    .font(.system(size: 32))
+                    .foregroundColor(Color.honeAction.opacity(0.7))
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(email)
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundColor(Color.honeText)
+                    Text("Awaiting verification")
+                        .font(.system(size: 11))
+                        .foregroundColor(Color.honeMuted)
+                }
+            }
+            .padding(14)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .background(
+                RoundedRectangle(cornerRadius: 10, style: .continuous)
+                    .fill(Color.honeCard.opacity(0.5))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous)
+                        .stroke(Color.honeAction.opacity(0.2), lineWidth: 1))
+            )
+
+            Button("Back to Sign In") {
+                awaitingConfirmation = false
+                isSignUp = false
+                errorMessage = ""
+            }
+            .buttonStyle(.plain)
+            .font(.system(size: 12))
+            .foregroundColor(Color.honeAction)
         }
     }
 
@@ -852,14 +902,19 @@ struct AccountSettingsView: View {
         errorMessage = ""
         do {
             if isSignUp {
-                _ = try await supabase.signUp(email: email, password: password)
+                let loggedIn = try await supabase.signUp(email: email, password: password)
+                if !loggedIn {
+                    // Confirmation email sent — show waiting state
+                    isLoading = false
+                    awaitingConfirmation = true
+                    return
+                }
+                // Email confirmation disabled — logged in immediately
+                appState.pushToSupabase()
             } else {
                 _ = try await supabase.signIn(email: email, password: password)
             }
-            // Pull data after login
             await appState.syncFromSupabase()
-            // Push local data if signing up
-            if isSignUp { appState.pushToSupabase() }
         } catch {
             errorMessage = error.localizedDescription
         }
