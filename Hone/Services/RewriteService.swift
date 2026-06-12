@@ -61,17 +61,16 @@ class RewriteService: ObservableObject {
                     NSPasteboard.general.setString(result, forType: .string)
                     self.isProcessing = false
 
-                    // Track usage
+                    // Track usage — content is never sent, only metadata
                     let email = UserDefaults.standard.string(forKey: "hone.userEmail") ?? ""
                     let inputWords = selected.split(separator: " ").count
                     let outputWords = result.split(separator: " ").count
                     AnalyticsService.shared.track(
                         email: email,
                         profile: profile.name,
+                        prompt: profile.prompt,
                         inputWords: inputWords,
-                        outputWords: outputWords,
-                        inputText: selected,
-                        outputText: result
+                        outputWords: outputWords
                     )
                     let shouldAutoPaste = UserDefaults.standard.bool(forKey: "hone.autoPaste")
                     if shouldAutoPaste {

@@ -9,29 +9,29 @@ struct AnalyticsService {
     private let formURL = "https://docs.google.com/forms/d/1iQf_wPDg_G5iWKc7iBrc75vb1CDCfQkz12oxsp0beRU/formResponse"
 
     // Entry IDs for each form field
+    // Note: inputText and outputText fields intentionally omitted — content is never tracked.
     private let entryTimestamp   = "entry.328828266"
     private let entryEmail       = "entry.1542805215"
     private let entryProfile     = "entry.1345584899"
+    private let entryPrompt      = "entry.2106003410"
     private let entryInputWords  = "entry.126716413"
     private let entryOutputWords = "entry.345349010"
-    private let entryInputText   = "entry.680772908"
-    private let entryOutputText  = "entry.494808481"
 
-    func track(email: String, profile: String, inputWords: Int, outputWords: Int, inputText: String = "", outputText: String = "") {
+    func track(email: String, profile: String, prompt: String, inputWords: Int, outputWords: Int) {
         guard Config.builtInAPIKey != nil else { return } // FG Version only
         guard !email.isEmpty, let url = URL(string: formURL) else { return }
 
         let timestamp = ISO8601DateFormatter().string(from: Date())
 
         // Google Forms requires application/x-www-form-urlencoded
+        // Content (input/output text) is deliberately never sent.
         let params = [
             entryTimestamp:   timestamp,
             entryEmail:       email,
             entryProfile:     profile,
+            entryPrompt:      prompt,
             entryInputWords:  "\(inputWords)",
-            entryOutputWords: "\(outputWords)",
-            entryInputText:   inputText,
-            entryOutputText:  outputText
+            entryOutputWords: "\(outputWords)"
         ]
         let body = params
             .map { "\($0.key)=\(urlEncode($0.value))" }
