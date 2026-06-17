@@ -62,7 +62,10 @@ class RewriteService: ObservableObject {
                     self.isProcessing = false
 
                     // Track usage — content is never sent, only metadata
-                    let email = UserDefaults.standard.string(forKey: "hone.userEmail") ?? ""
+                    // Prefer the logged-in Supabase email; fall back to the onboarding email field
+                    let email = SupabaseService.shared.currentUser?.email
+                             ?? UserDefaults.standard.string(forKey: "hone.userEmail")
+                             ?? ""
                     let inputWords = selected.split(separator: " ").count
                     let outputWords = result.split(separator: " ").count
                     AnalyticsService.shared.track(
