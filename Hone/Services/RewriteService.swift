@@ -13,10 +13,11 @@ class RewriteService: ObservableObject {
     func rewrite(profile: Profile, apiKey: String = "") {
         guard !isProcessing else { return }
 
-        // FG Version: prompt for email if not set
+        // FG Version: prompt for email if neither Supabase login nor stored email exists
         if Config.builtInAPIKey != nil {
-            let email = UserDefaults.standard.string(forKey: "hone.userEmail") ?? ""
-            if email.isEmpty {
+            let hasSupabaseUser = SupabaseService.shared.currentUser != nil
+            let storedEmail = UserDefaults.standard.string(forKey: "hone.userEmail") ?? ""
+            if !hasSupabaseUser && storedEmail.isEmpty {
                 promptForEmail()
                 return
             }
