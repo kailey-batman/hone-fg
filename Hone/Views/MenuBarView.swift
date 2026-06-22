@@ -114,7 +114,7 @@ struct MenuBarView: View {
 
             #if canImport(Sparkle)
             Button {
-                NSApp.sendAction(#selector(SPUStandardUpdaterController.checkForUpdates(_:)), to: nil, from: nil)
+                (NSApp.delegate as? AppDelegate)?.updaterController?.checkForUpdates(nil)
             } label: {
                 Image(systemName: "arrow.triangle.2.circlepath")
                     .font(.system(size: 13))

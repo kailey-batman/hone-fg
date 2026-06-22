@@ -7,7 +7,7 @@ import Sparkle
 class AppDelegate: NSObject, NSApplicationDelegate {
     private var onboardingWindow: NSWindow?
     #if canImport(Sparkle)
-    private var updaterController: SPUStandardUpdaterController?
+    var updaterController: SPUStandardUpdaterController?
     #endif
 
     /// AppState lives here so it exists at launch, before the MenuBarExtra is clicked
