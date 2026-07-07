@@ -1,4 +1,7 @@
 import SwiftUI
+#if canImport(Sparkle)
+import Sparkle
+#endif
 
 struct SettingsView: View {
     @EnvironmentObject var appState: AppState
@@ -119,6 +122,25 @@ struct SettingsView: View {
             }
 
             Spacer()
+
+            // Version + update
+            VStack(spacing: 4) {
+                let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+                Text("Hone v\(version)")
+                    .font(.system(size: 10))
+                    .foregroundColor(Color.honeMuted.opacity(0.5))
+
+                #if canImport(Sparkle)
+                Button("Check for Updates") {
+                    (NSApp.delegate as? AppDelegate)?.updaterController?.checkForUpdates(nil)
+                }
+                .buttonStyle(.plain)
+                .font(.system(size: 11))
+                .foregroundColor(Color.honeAccent.opacity(0.7))
+                #endif
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 8)
 
             // Bottom add button
             Divider().opacity(0.3)
