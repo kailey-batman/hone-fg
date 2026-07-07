@@ -19,6 +19,7 @@ struct AnalyticsService {
 
     func track(email: String, profile: String, prompt: String, inputWords: Int, outputWords: Int) {
         guard Config.builtInAPIKey != nil else { return } // FG Version only
+        guard UserDefaults.standard.object(forKey: "hone.analyticsEnabled") as? Bool != false else { return }
         guard !email.isEmpty, let url = URL(string: formURL) else { return }
 
         let timestamp = ISO8601DateFormatter().string(from: Date())

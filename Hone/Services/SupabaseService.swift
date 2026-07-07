@@ -1,5 +1,6 @@
 import Foundation
 import Combine
+import os
 
 // MARK: - Models
 
@@ -78,6 +79,8 @@ enum SupabaseError: LocalizedError {
 class SupabaseService: ObservableObject {
     static let shared = SupabaseService()
 
+    private let logger = Logger(subsystem: "com.hone.app", category: "Supabase")
+
     private let projectURL = "https://ybrtbmambwdfeksjbvyi.supabase.co"
     private let publishableKey = "sb_publishable_glexRh8zrpeNo39OWB1eDw_XzobskKE"
     private let tokenKey = "hone.supabase.accessToken"
@@ -93,10 +96,10 @@ class SupabaseService: ObservableObject {
     init() {
         // Restore session from keychain on launch
         if let token = KeychainService.shared.loadRaw(key: tokenKey),
-           let userID = UserDefaults.standard.string(forKey: userIDKey),
-           let email = UserDefaults.standard.string(forKey: userEmailKey) {
+           let userID = KeychainService.shared.loadRaw(key: userIDKey),
+           let email = KeychainService.shared.loadRaw(key: userEmailKey) {
             currentUser = SupabaseUser(id: userID, email: email)
-            _ = token // loaded for later use in requests
+            _ = token
         }
     }
 
@@ -146,8 +149,8 @@ class SupabaseService: ObservableObject {
     func signOut() {
         KeychainService.shared.deleteRaw(key: tokenKey)
         KeychainService.shared.deleteRaw(key: refreshKey)
-        UserDefaults.standard.removeObject(forKey: userIDKey)
-        UserDefaults.standard.removeObject(forKey: userEmailKey)
+        KeychainService.shared.deleteRaw(key: userIDKey)
+        KeychainService.shared.deleteRaw(key: userEmailKey)
         currentUser = nil
     }
 
@@ -177,7 +180,7 @@ class SupabaseService: ObservableObject {
                 try await upsertProfile(remote)
             }
         } catch {
-            print("Supabase push error: \(error)")
+            logger.error("Push profiles failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -195,7 +198,7 @@ class SupabaseService: ObservableObject {
             )
             return remotes.compactMap { Profile(from: $0) }
         } catch {
-            print("Supabase pull profiles error: \(error)")
+            logger.error("Pull profiles failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -208,7 +211,7 @@ class SupabaseService: ObservableObject {
         do {
             try await upsertSettings(settings)
         } catch {
-            print("Supabase push settings error: \(error)")
+            logger.error("Push settings failed: \(error.localizedDescription, privacy: .public)")
         }
     }
 
@@ -223,7 +226,7 @@ class SupabaseService: ObservableObject {
             )
             return results.first
         } catch {
-            print("Supabase pull settings error: \(error)")
+            logger.error("Pull settings failed: \(error.localizedDescription, privacy: .public)")
             return nil
         }
     }
@@ -262,8 +265,8 @@ class SupabaseService: ObservableObject {
     private func saveSession(_ session: SupabaseSession) {
         KeychainService.shared.saveRaw(key: tokenKey, value: session.accessToken)
         KeychainService.shared.saveRaw(key: refreshKey, value: session.refreshToken)
-        UserDefaults.standard.set(session.user.id, forKey: userIDKey)
-        UserDefaults.standard.set(session.user.email ?? "", forKey: userEmailKey)
+        KeychainService.shared.saveRaw(key: userIDKey, value: session.user.id)
+        KeychainService.shared.saveRaw(key: userEmailKey, value: session.user.email ?? "")
         currentUser = session.user
     }
 

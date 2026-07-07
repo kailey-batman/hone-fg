@@ -114,6 +114,7 @@ struct SettingsView: View {
                 if Config.builtInAPIKey != nil {
                     EmailSettingRow()
                         .environmentObject(appState)
+                    UsageTrackingRow()
                 }
             }
 
@@ -527,6 +528,40 @@ struct EmailSettingRow: View {
             appState.userEmail = trimmed
         }
         editing = false
+    }
+}
+
+// MARK: Usage Tracking Row (FG Version only)
+
+struct UsageTrackingRow: View {
+    @AppStorage("hone.analyticsEnabled") private var analyticsEnabled = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            HStack(spacing: 8) {
+                Image(systemName: "chart.bar")
+                    .font(.system(size: 11))
+                    .foregroundColor(Color.honeMuted)
+                    .frame(width: 16)
+                Text("Usage tracking")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.honeMuted)
+                Spacer()
+                Toggle("", isOn: $analyticsEnabled)
+                    .toggleStyle(.switch)
+                    .scaleEffect(0.75)
+                    .labelsHidden()
+            }
+            .padding(.horizontal, 14)
+            .padding(.vertical, 5)
+
+            Text("Tracks: email, voice name, prompt, word counts. No text content is ever sent.")
+                .font(.system(size: 10))
+                .foregroundColor(Color.honeMuted.opacity(0.6))
+                .padding(.horizontal, 14)
+                .padding(.bottom, 4)
+                .fixedSize(horizontal: false, vertical: true)
+        }
     }
 }
 

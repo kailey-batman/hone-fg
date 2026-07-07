@@ -93,10 +93,11 @@ class AIService {
 
     private func callGoogle(text: String, systemPrompt: String, apiKey: String) async throws -> String {
         let model = AIProvider.google.model
-        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent?key=\(apiKey)")!
+        let url = URL(string: "https://generativelanguage.googleapis.com/v1beta/models/\(model):generateContent")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(apiKey, forHTTPHeaderField: "x-goog-api-key")
 
         let body: [String: Any] = [
             "systemInstruction": [
