@@ -23,10 +23,13 @@ class RewriteService: ObservableObject {
             }
         }
 
-        // Request accessibility if not already granted — uses system prompt
-        let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
-        guard AXIsProcessTrustedWithOptions(options) else {
-            setStatus("Grant Accessibility access, then try again", autoClear: true)
+        // Check accessibility without triggering the system prompt every time
+        guard AXIsProcessTrusted() else {
+            // Open System Settings directly so the user doesn't get repeated system dialogs
+            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
+                NSWorkspace.shared.open(url)
+            }
+            setStatus("Enable Accessibility in System Settings, then try again", autoClear: true)
             return
         }
 
