@@ -23,13 +23,12 @@ class RewriteService: ObservableObject {
             }
         }
 
-        // Check accessibility without triggering the system prompt every time
+        // Check accessibility — prompt once to register with macOS TCC
         guard AXIsProcessTrusted() else {
-            // Open System Settings directly so the user doesn't get repeated system dialogs
-            if let url = URL(string: "x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility") {
-                NSWorkspace.shared.open(url)
-            }
-            setStatus("Enable Accessibility in System Settings, then try again", autoClear: true)
+            let options = [kAXTrustedCheckOptionPrompt.takeRetainedValue() as String: true] as CFDictionary
+            AXIsProcessTrustedWithOptions(options)
+            setStatus("Grant Accessibility access, then quit and reopen Hone", autoClear: false)
+            HUDService.shared.show(icon: "exclamationmark.shield", message: "Grant access, then reopen Hone")
             return
         }
 

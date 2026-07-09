@@ -6,7 +6,19 @@
         <description>Hone update feed for the Fieldguide team</description>
         <language>en</language>
 
-        <!-- Releases go here, newest first. Run ./scripts/release.xml <version> to generate the entry. -->
+        <!-- Releases go here, newest first. Run ./scripts/release.sh <version> to generate the entry. -->
+
+        <item>
+            <title>Version 1.3.10</title>
+            <pubDate>Mon, 07 Jul 2026 14:30:00 -0400</pubDate>
+            <sparkle:version>14</sparkle:version>
+            <sparkle:shortVersionString>1.3.10</sparkle:shortVersionString>
+            <enclosure
+                url="https://github.com/kailey-batman/hone-fg/releases/download/v1.3.10/Hone-FG-1.3.10.zip"
+                sparkle:edSignature="VCIobltDfrjNUtBdpWvp7nDmn1sBAunb8mBAEkdBz47RoW9vr46BQHa+1Y0LmOn3ZhQaDbWAtD9HKdKraehdBA=="
+                length="3693594"
+                type="application/octet-stream" />
+        </item>
 
         <item>
             <title>Version 1.3.9</title>
