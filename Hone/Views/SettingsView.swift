@@ -115,14 +115,12 @@ struct SettingsView: View {
                     .font(.system(size: 10))
                     .foregroundColor(Color.honeMuted.opacity(0.5))
 
-                #if canImport(Sparkle)
                 Button("Check for Updates") {
-                    (NSApp.delegate as? AppDelegate)?.updaterController?.checkForUpdates(nil)
+                    NSWorkspace.shared.open(URL(string: "https://github.com/kailey-batman/hone-fg/releases/latest")!)
                 }
                 .buttonStyle(.plain)
                 .font(.system(size: 11))
                 .foregroundColor(Color.honeAccent.opacity(0.7))
-                #endif
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, 8)
