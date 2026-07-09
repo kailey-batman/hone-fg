@@ -97,27 +97,12 @@ struct SettingsView: View {
                     .padding(.top, 16)
                     .padding(.bottom, 4)
 
-                HStack(spacing: 8) {
-                    Image(systemName: "doc.on.clipboard")
-                        .font(.system(size: 11))
-                        .foregroundColor(Color.honeMuted)
-                        .frame(width: 16)
-                    Text("Auto-paste")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.honeMuted)
-                    Spacer()
-                    Toggle("", isOn: $appState.autoPaste)
-                        .toggleStyle(.switch)
-                        .scaleEffect(0.75)
-                        .labelsHidden()
-                }
-                .padding(.horizontal, 14)
-                .padding(.vertical, 6)
+                sidebarToggle(icon: "doc.on.clipboard", label: "Auto-paste", isOn: $appState.autoPaste)
 
                 if Config.builtInAPIKey != nil {
                     EmailSettingRow()
                         .environmentObject(appState)
-                    UsageTrackingRow()
+                    UsageTrackingToggle()
                 }
             }
 
@@ -159,13 +144,35 @@ struct SettingsView: View {
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
         }
-        .frame(width: 190)
+        .frame(width: 210)
         .background(Color.honeBase)
         .onAppear {
             if selectedProfileID == nil {
                 selectedProfileID = appState.profiles.first?.id ?? accountID
             }
         }
+    }
+
+    func sidebarToggle(icon: String, label: String, isOn: Binding<Bool>) -> some View {
+        HStack(spacing: 8) {
+            Image(systemName: icon)
+                .font(.system(size: 11))
+                .foregroundColor(Color.honeMuted)
+                .frame(width: 16)
+            Text(label)
+                .font(.system(size: 12))
+                .foregroundColor(Color.honeMuted)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Toggle("", isOn: isOn)
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .frame(width: 26, height: 16)
+                .scaleEffect(x: 0.65, y: 0.65, anchor: .trailing)
+                .frame(width: 26, height: 16, alignment: .trailing)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 5)
     }
 
     func sidebarRow(isSelected: Bool, label: String, icon: String? = nil, badge: String?, action: @escaping () -> Void) -> some View {
@@ -553,37 +560,31 @@ struct EmailSettingRow: View {
     }
 }
 
-// MARK: Usage Tracking Row (FG Version only)
+// MARK: Usage Tracking Toggle (FG Version only)
 
-struct UsageTrackingRow: View {
+struct UsageTrackingToggle: View {
     @AppStorage("hone.analyticsEnabled") private var analyticsEnabled = true
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 8) {
-                Image(systemName: "chart.bar")
-                    .font(.system(size: 11))
-                    .foregroundColor(Color.honeMuted)
-                    .frame(width: 16)
-                Text("Usage tracking")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color.honeMuted)
-                Spacer()
-                Toggle("", isOn: $analyticsEnabled)
-                    .toggleStyle(.switch)
-                    .scaleEffect(0.75)
-                    .labelsHidden()
-            }
-            .padding(.horizontal, 14)
-            .padding(.vertical, 5)
-
-            Text("Tracks: email, voice name, prompt, word counts. No text content is ever sent.")
-                .font(.system(size: 10))
-                .foregroundColor(Color.honeMuted.opacity(0.6))
-                .padding(.horizontal, 14)
-                .padding(.bottom, 4)
-                .fixedSize(horizontal: false, vertical: true)
+        HStack(spacing: 8) {
+            Image(systemName: "chart.bar")
+                .font(.system(size: 11))
+                .foregroundColor(Color.honeMuted)
+                .frame(width: 16)
+            Text("Usage tracking")
+                .font(.system(size: 12))
+                .foregroundColor(Color.honeMuted)
+                .lineLimit(1)
+            Spacer(minLength: 4)
+            Toggle("", isOn: $analyticsEnabled)
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .scaleEffect(x: 0.65, y: 0.65, anchor: .trailing)
+                .frame(width: 26, height: 16, alignment: .trailing)
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 5)
+        .help("Tracks: email, voice name, prompt text, word counts. Text content is never sent.")
     }
 }
 

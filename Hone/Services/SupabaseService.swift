@@ -345,6 +345,14 @@ class SupabaseService: ObservableObject {
         do {
             let (data, _) = try await URLSession.shared.data(for: req)
             return data
+        } catch let urlError as URLError {
+            switch urlError.code {
+            case .notConnectedToInternet, .networkConnectionLost, .dataNotAllowed:
+                throw SupabaseError.networkError
+            default:
+                logger.error("URLSession error: \(urlError.localizedDescription, privacy: .public)")
+                throw SupabaseError.unknown("Connection failed (\(urlError.code.rawValue)). Check your network and try again.")
+            }
         } catch {
             throw SupabaseError.networkError
         }
