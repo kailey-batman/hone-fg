@@ -31,32 +31,36 @@ struct SettingsView: View {
 
     var sidebar: some View {
         VStack(spacing: 0) {
-            // Profiles section
-            VStack(alignment: .leading, spacing: 2) {
-                Text("Profiles")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(Color.honeAccent.opacity(0.8))
-                    .padding(.horizontal, 14)
-                    .padding(.top, 16)
-                    .padding(.bottom, 4)
+            // Profiles section — scrollable so adding many profiles doesn't break layout
+            Text("Profiles")
+                .font(.system(size: 11, weight: .semibold))
+                .foregroundColor(Color.honeAccent.opacity(0.8))
+                .padding(.horizontal, 14)
+                .padding(.top, 16)
+                .padding(.bottom, 4)
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                ForEach(appState.profiles) { profile in
-                    sidebarRow(
-                        isSelected: selectedProfileID == profile.id,
-                        label: profile.name,
-                        badge: profile.hotkey?.displayString
-                    ) {
-                        selectedProfileID = profile.id
-                    }
-                    .contextMenu {
-                        Button(role: .destructive) {
-                            deleteProfile(profile)
-                        } label: {
-                            Label("Delete Profile", systemImage: "trash")
+            ScrollView(.vertical, showsIndicators: false) {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(appState.profiles) { profile in
+                        sidebarRow(
+                            isSelected: selectedProfileID == profile.id,
+                            label: profile.name,
+                            badge: profile.hotkey?.displayString
+                        ) {
+                            selectedProfileID = profile.id
+                        }
+                        .contextMenu {
+                            Button(role: .destructive) {
+                                deleteProfile(profile)
+                            } label: {
+                                Label("Delete Profile", systemImage: "trash")
+                            }
                         }
                     }
                 }
             }
+            .frame(maxHeight: 200)
 
             // Account section
             VStack(alignment: .leading, spacing: 2) {
