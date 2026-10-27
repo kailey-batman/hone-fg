@@ -1,0 +1,20 @@
+name = "hone-proxy"
+main = "src/index.js"
+compatibility_date = "2025-09-01"
+
+workers_dev = true
+# Off by default this would publish an extra public hostname per version. They'd
+# still demand the token, but there's no reason to widen the surface.
+preview_urls = false
+
+# Secrets (set with `wrangler secret put <NAME>`, never written to this file):
+#   HONE_ANTHROPIC_KEY — the real Anthropic key. Only ever lives here.
+#   HONE_TEAM_TOKEN    — the shared token the app sends. Rotate this, not the key.
+
+# 60 rewrites per minute per IP. Generous for a person, tight enough that a
+# leaked token or a stuck client can't drain the Anthropic budget unnoticed.
+[[unsafe.bindings]]
+name = "HONE_RATE_LIMIT"
+type = "ratelimit"
+namespace_id = "1001"
+simple = { limit = 60, period = 60 }

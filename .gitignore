@@ -27,3 +27,8 @@ Hone (FG Version)/Config.swift
 .DS_Store
 .AppleDouble
 .LSOverride
+
+# Worker secrets + deps
+proxy/.dev.vars
+proxy/node_modules/
+proxy/.wrangler/

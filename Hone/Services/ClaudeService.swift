@@ -32,12 +32,25 @@ class AIService {
     // MARK: - Anthropic
 
     private func callAnthropic(text: String, systemPrompt: String, apiKey: String) async throws -> String {
-        let url = URL(string: "https://api.anthropic.com/v1/messages")!
+        // Teammates on the built-in credential go through the FG proxy, which holds the
+        // real Anthropic key server side so it never ships inside the app. Anyone who
+        // entered their own key in Settings talks to Anthropic directly as before.
+        let usingProxy = (apiKey == Config.builtInAPIKey)
+
+        let url = usingProxy
+            ? URL(string: "\(Config.proxyBaseURL)/v1/messages")!
+            : URL(string: "https://api.anthropic.com/v1/messages")!
+
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json",    forHTTPHeaderField: "Content-Type")
-        request.setValue(apiKey,                forHTTPHeaderField: "x-api-key")
         request.setValue("2023-06-01",          forHTTPHeaderField: "anthropic-version")
+
+        if usingProxy {
+            request.setValue(apiKey, forHTTPHeaderField: "x-hone-token")
+        } else {
+            request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
+        }
 
         let body: [String: Any] = [
             "model":      AIProvider.anthropic.model,
